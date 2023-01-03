@@ -1,22 +1,25 @@
-import random
-import heapq
+import networkx as nx
+
+# Génération aléatoire d'un graphe avec networkx
+G = nx.gnm_random_graph(10, 20)
+
+# Conversion du graphe en dictionnaire
+G_dict = nx.to_dict_of_dicts(G)
 
 # Classe pour représenter un graphe
 class Graph:
-  def __init__(self, vertices):
-    self.V = vertices
-    self.graph = [[0 for column in range(vertices)]
-                      for row in range(vertices)]
+  def __init__(self, graph_dict):
+    self.graph_dict = graph_dict
 
   def printSolution(self, dist):
     print("Vertex \t Distance from Source")
-    for node in range(self.V):
+    for node in dist:
       print(node, "\t\t", dist[node])
 
   # Algorithme de Dijkstra
   def dijkstra(self, src):
-    row = len(self.graph)
-    col = len(self.graph[0])
+    row = len(self.graph_dict)
+    col = len(self.graph_dict)
 
     # Tableau de distances
     distance = [float("Inf")] * row
@@ -43,33 +46,20 @@ class Graph:
       visited[current_node] = True
 
       # Mettre à jour les distances des voisins du noeud courant
-      for i in range(col):
-        if self.graph[current_node][i] > 0 and not visited[i]:
-          if distance[i] > distance[current_node] + self.graph[current_node][i]:
-            distance[i] = distance[current_node] + self.graph[current_node][i]
-            parent[i] = current_node
-            heapq.heappush(priority_queue, [distance[i], i])
+      for neighbor in self.graph_dict[current_node]:
+        if not visited[neighbor]:
+          if distance[neighbor] > distance[current_node] + self.graph_dict[current_node][neighbor]['weight']:
+            distance[neighbor] = distance[current_node] + self.graph_dict[current_node][neighbor]['weight']
+            parent[neighbor] = current_node
+            heapq.heappush(priority_queue, [distance[neighbor], neighbor])
 
     self.printSolution(distance)
 
-# Génération aléatoire d'un graphe
-def random_graph(vertices, edges):
-  graph = Graph(vertices)
-
-  for i in range(edges):
-    src = random.randint(0, vertices-1)
-    dest = random.randint(0, vertices-1)
-    weight = random.randint(1, 10)
-    graph.graph[src][dest] = weight
-    graph.graph[dest][src] = weight
-
-  return graph
-
 # Exemple d'utilisation
-vertices = 6
-edges = 9
+graph = Graph(G_dict)
 
-graph = random_graph(vertices, edges)
+
+print(G_dict)
 
 # Calculer les plus courts chemins à partir de la source 0
-graph.dijkstra(0)
+graph.dijkstra(1)
