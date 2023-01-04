@@ -1,6 +1,9 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.patches as pat
+import datetime
 import ap
+
 
 def ExtractionDesAP(fichier_ap, fichier_apc):
 
@@ -56,7 +59,7 @@ def topologie():
 
     #Ajout des sommets représentants les AP au graphe de topologie
     for x in aps.values():
-        topo.add_node(x.index, coord=x.coord, couleur=x.color)
+        topo.add_node(x.index, coord=x.coord, couleur=x.color, rayon=x.rayon)
 
     #Ajout des arrets représentants l'interconnexion des AP
     for ap1 in aps.values():
@@ -65,7 +68,8 @@ def topologie():
                 topo.add_edge(ap1.index, ap2.index)
                 arrets[ap1.index] = ap2.index
 
-    print(arrets)
+    for u,v in topo.edges:
+        topo[u][v]['poids'] = 1
 
     return topo
 
@@ -78,15 +82,31 @@ def affichage(graphe):
     #Stockage des coordonnées et des couleurs dans des variables
     pos = nx.get_node_attributes(graphe,'coord')
     col = nx.get_node_attributes(graphe, 'couleur')
+    ray = nx.get_node_attributes(graphe, 'rayon')
+    poids = nx.get_edge_attributes(graphe, 'poids')
+
+    print(poids)
 
     #Ajout des couleurs dans la liste pour affichage
     for x in col:
         colors.append(col[x])
 
     #Affichage
-    nx.draw_networkx_nodes(graphe, pos, node_color=colors)
-    nx.draw_networkx_labels(graphe, pos)
-    nx.draw_networkx_edges(graphe, pos)
+
+    #Rayons de couverture
+    fig, ax = plt.subplots()
+    for n, xy in pos.items():
+        cercle = pat.Circle(xy, ray[n], fill=False, joinstyle='round')
+        ax.add_artist(cercle)
+
+
+    #APs et Liens
+    nx.draw_networkx_nodes(graphe, pos, node_color=colors, node_size=100)
+    nx.draw_networkx_labels(graphe, pos, font_size=8)
+    #nx.draw_networkx_edges(graphe, pos)
+    #nx.draw_networkx_edge_labels(graphe, pos, edge_labels = nx.get_edge_attributes(graphe, 'poids'))
+
+    plt.savefig(f"Historique/graphe_{datetime.datetime.today().strftime('%d-%m-%Y_%H-%M-%S')}.png", dpi=72)
     plt.show()
 
 affichage(topologie())
