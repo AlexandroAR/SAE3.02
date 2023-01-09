@@ -173,6 +173,14 @@ def degree(topologie):
     sorted_degrees = sorted(degrees.items(), key = lambda x:x[1], reverse = True)
 
     return sorted_degrees
+
+def classify_nodes(graph):
+    for node in graph.nodes():
+        if len(list(graph.neighbors(node))) >= 2:
+            graph.nodes[node]["type"] = "Relais"
+        else:
+            graph.nodes[node]["type"] = "Simple"
+
         
 
     
