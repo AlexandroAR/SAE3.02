@@ -164,6 +164,15 @@ def zones(topologie):
         i+=1
 
     return topologie
+
+def degree(topologie):
+    # Trouver le degré de chaque noeud
+    degrees = topologie.degree()
+
+    # Trier les degrés par ordre décroissant
+    sorted_degrees = sorted(degrees.items(), key = lambda x:x[1], reverse = True)
+
+    return sorted_degrees
         
 
     
