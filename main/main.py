@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as pat
 import datetime
 import ap
+import dijkstra as dij
+import math
 
 
 def ExtractionDesAP(fichier_ap, fichier_apc):
@@ -39,7 +41,7 @@ def ExtractionDesAP(fichier_ap, fichier_apc):
             couleur = 'blue'
             type_ap = 'C'
         else:
-            couleur = 'red'
+            couleur = 'gray'
             type_ap = 'S'
 
         #Création d'un objet AP et ajout en dictionnaire des AP
@@ -59,10 +61,11 @@ def topologie():
 
     #Ajout des sommets représentants les AP au graphe de topologie
     for x in aps.values():
-        topo.add_node(x.index, coord=x.coord, couleur=x.color, rayon=x.rayon)
+        topo.add_node(x.index, coord=x.coord, couleur=x.color, rayon=x.rayon, type=x.type_ap, groupe=x.groupe)
 
     #Ajout des arrets représentants l'interconnexion des AP
     for ap1 in aps.values():
+        arrets = {}
         for ap2 in aps.values():
             if (ap1.index != ap2.index) and (ap1.index not in arrets.values()) and (ap1.IntersectionCouverture(ap2) == True):
                 topo.add_edge(ap1.index, ap2.index)
@@ -85,8 +88,6 @@ def affichage(graphe):
     ray = nx.get_node_attributes(graphe, 'rayon')
     poids = nx.get_edge_attributes(graphe, 'poids')
 
-    print(poids)
-
     #Ajout des couleurs dans la liste pour affichage
     for x in col:
         colors.append(col[x])
@@ -96,20 +97,81 @@ def affichage(graphe):
     #Rayons de couverture
     fig, ax = plt.subplots()
     for n, xy in pos.items():
-        cercle = pat.Circle(xy, ray[n], fill=False, joinstyle='round')
+        cercle = pat.Circle(xy, ray[n], fill=False)
         ax.add_artist(cercle)
 
 
     #APs et Liens
     nx.draw_networkx_nodes(graphe, pos, node_color=colors, node_size=100)
     nx.draw_networkx_labels(graphe, pos, font_size=8)
-    #nx.draw_networkx_edges(graphe, pos)
+    nx.draw_networkx_edges(graphe, pos)
     #nx.draw_networkx_edge_labels(graphe, pos, edge_labels = nx.get_edge_attributes(graphe, 'poids'))
 
     plt.savefig(f"Historique/graphe_{datetime.datetime.today().strftime('%d-%m-%Y_%H-%M-%S')}.png", dpi=72)
     plt.show()
 
-affichage(topologie())
+# def zones(topologie):
+#     apcs = []
+#     zones = ['yellow', 'green', 'violet', 'red', 'black']
+#     i = 0
+#     types = nx.get_node_attributes(topologie, 'type')
+#     for noeud in types:
+#         if types[noeud] == 'C':
+#             apcs.append(noeud)
+
+#     for apc in apcs:
+#         dijkstra = dij.dijkstra(topologie, apc)
+#         print(f"{apc}: {dijkstra}")
+#         for noeud in dijkstra:
+#             if dijkstra[noeud] >= 1 and dijkstra[noeud] < 20:
+#                 topologie.nodes[noeud]['couleur'] = zones[i]
+#                 topologie.nodes[noeud]['groupe'] = apc
+#         i += 1
+    
+#     return topologie
+
+def zones(topologie):
+    apcs={}
+    zones = {'isolé': []}
+    couleurs_zones = ['white', 'green', 'violet', 'red', 'gray', 'yellow']
+    i = 0
+    types = nx.get_node_attributes(topologie, 'type')
+    for noeud in types:
+        if types[noeud] == 'C':
+            apcs[noeud] = dij.dijkstra(topologie, noeud)
+            zones[noeud] = []
+
+    for noeud in topologie.nodes():
+        min = math.inf
+        zone = None
+        for apc in apcs:
+            if apcs[apc][noeud] < min and noeud not in apcs.keys():
+                apcs[apc][noeud] = min
+                zone = apc
+        if zone != None:
+            zones[zone].append(noeud)
+            topologie.nodes[noeud]['groupe'] = zone
+        else:
+            zones['isolé'].append(noeud)
+    
+    print(zones)
+
+    for zone in zones:
+        for noeud in zones[zone]:
+            topologie.nodes[noeud]['couleur'] = couleurs_zones[i]
+        if zone != 'isolé':
+            topologie.nodes[zone]['couleur'] = 'blue'
+        i+=1
+
+    return topologie
+        
+
+    
+
+graphe = topologie()
+affichage(graphe)
+affichage(zones(graphe))
+
 
 
 
