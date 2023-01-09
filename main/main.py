@@ -95,10 +95,10 @@ def affichage(graphe):
     #Affichage
 
     #Rayons de couverture
-    fig, ax = plt.subplots()
-    for n, xy in pos.items():
-        cercle = pat.Circle(xy, ray[n], fill=False)
-        ax.add_artist(cercle)
+    # fig, ax = plt.subplots()
+    # for n, xy in pos.items():
+    #     cercle = pat.Circle(xy, ray[n], fill=False)
+    #     ax.add_artist(cercle)
 
 
     #APs et Liens
@@ -109,26 +109,6 @@ def affichage(graphe):
 
     plt.savefig(f"Historique/graphe_{datetime.datetime.today().strftime('%d-%m-%Y_%H-%M-%S')}.png", dpi=72)
     plt.show()
-
-# def zones(topologie):
-#     apcs = []
-#     zones = ['yellow', 'green', 'violet', 'red', 'black']
-#     i = 0
-#     types = nx.get_node_attributes(topologie, 'type')
-#     for noeud in types:
-#         if types[noeud] == 'C':
-#             apcs.append(noeud)
-
-#     for apc in apcs:
-#         dijkstra = dij.dijkstra(topologie, apc)
-#         print(f"{apc}: {dijkstra}")
-#         for noeud in dijkstra:
-#             if dijkstra[noeud] >= 1 and dijkstra[noeud] < 20:
-#                 topologie.nodes[noeud]['couleur'] = zones[i]
-#                 topologie.nodes[noeud]['groupe'] = apc
-#         i += 1
-    
-#     return topologie
 
 def zones(topologie):
     apcs={}
@@ -146,7 +126,7 @@ def zones(topologie):
         zone = None
         for apc in apcs:
             if apcs[apc][noeud] < min and noeud not in apcs.keys():
-                apcs[apc][noeud] = min
+                min = apcs[apc][noeud]
                 zone = apc
         if zone != None:
             zones[zone].append(noeud)
@@ -164,13 +144,13 @@ def zones(topologie):
         i+=1
 
     return topologie
-
+        
 def degree(topologie):
     # Trouver le degré de chaque noeud
     degrees = topologie.degree()
 
     # Trier les degrés par ordre décroissant
-    sorted_degrees = sorted(degrees.items(), key = lambda x:x[1], reverse = True)
+    sorted_degrees = sorted(degrees, key = lambda x:x[1], reverse = True)
 
     return sorted_degrees
 
@@ -180,14 +160,12 @@ def classify_nodes(graph):
             graph.nodes[node]["type"] = "Relais"
         else:
             graph.nodes[node]["type"] = "Simple"
-
-        
-
     
 
 graphe = topologie()
 affichage(graphe)
 affichage(zones(graphe))
+print(degree(graphe))
 
 
 
