@@ -21,3 +21,6 @@ class AP():
             return True
         
         return False
+
+    def DistanceEntreAP(self, ap):
+        return math.sqrt((self.coord[0]-ap.coord[0])**2 + (self.coord[1]-ap.coord[1])**2)

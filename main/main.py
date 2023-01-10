@@ -69,10 +69,11 @@ def topologie():
         for ap2 in aps.values():
             if (ap1.index != ap2.index) and (ap1.index not in arrets.values()) and (ap1.IntersectionCouverture(ap2) == True):
                 topo.add_edge(ap1.index, ap2.index)
+                topo[ap1.index][ap2.index]['poids'] = ap1.DistanceEntreAP(ap2)
                 arrets[ap1.index] = ap2.index
 
-    for u,v in topo.edges:
-        topo[u][v]['poids'] = 1
+    # for u,v in topo.edges:
+    #     topo[u][v]['poids'] = 1
 
     return topo
 
@@ -95,10 +96,10 @@ def affichage(graphe):
     #Affichage
 
     #Rayons de couverture
-    # fig, ax = plt.subplots()
-    # for n, xy in pos.items():
-    #     cercle = pat.Circle(xy, ray[n], fill=False)
-    #     ax.add_artist(cercle)
+    fig, ax = plt.subplots()
+    for n, xy in pos.items():
+        cercle = pat.Circle(xy, ray[n], fill=False)
+        ax.add_artist(cercle)
 
 
     #APs et Liens
@@ -165,7 +166,6 @@ def classify_nodes(graph):
 graphe = topologie()
 affichage(graphe)
 affichage(zones(graphe))
-print(degree(graphe))
 
 
 
