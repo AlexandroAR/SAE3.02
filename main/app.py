@@ -1,3 +1,4 @@
+# Importation de tous les libraries nécéssaires, ainsi que le fichier ap.py pour la classe AP
 import tkinter as tk
 from tkinter import filedialog, Checkbutton
 from PIL import Image, ImageTk
@@ -5,59 +6,90 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import datetime
 import ap
-import dijkstra as dij
 import math
-import time
 
+#-----------------------------------------------Affichage Tkinter-----------------------------------------------------
+
+# Déclaration de variables globales (Fichiers d'entrée et liste pour les widgets)
 FICHIER_AP = None
 FICHIER_APC = None
+WIDGETS = []
 
-# Create the main window
-window = tk.Tk()
-window.title("Détermination du type d’AP Wifi, par zone")
-
-# Add a button to import the first file
+# Fonction d'importation pour le premier fichier (fichier AP)
 def import_first_file():
     global FICHIER_AP
     FICHIER_AP = filedialog.askopenfilename()
-    print(f"First file imported: {FICHIER_AP}")
+    print(f"Fichier AP importé: {FICHIER_AP}")
     first_file_button.config(bg="green")
 
-# Add a button to import the second file
+# Fonction d'importation pour le deuxième fichier (fichier APC)
 def import_second_file():
     global FICHIER_APC
     FICHIER_APC = filedialog.askopenfilename()
-    print(f"Second file imported: {FICHIER_APC}")
+    print(f"Fichier AP Contrôleur importé: {FICHIER_APC}")
     second_file_button.config(bg="green")
 
+# Fonction pour démarrer le traitement des fichiers (Création de la topologie et détermination du type d'AP par zone)
 def start():
 
+    global topo
+    # Réinitialisation des boutons et graphes
+    Reinitialiser(WIDGETS)
+
+    # Vérification que les fichiers sont bien importés
     if FICHIER_AP != None and FICHIER_APC != None:
+        #Création de la topologie finale à l'aide des fonctions de traitement 
         topo = determination_type_AP(zones(topologie(FICHIER_AP, FICHIER_APC)))
+
+        # Création de l'image d'aperçu  
         affichage(topo, "classique")
         image_topo = preview()
-        # Load and display the image
         image = Image.open(image_topo)
         image = ImageTk.PhotoImage(image)
         image_label.config(image=image)
         image_label.image = image
         plt.close()
+
+        #Création des boutons qui peuvent agir sur la topologie
+
+        # Bouton pour afficher la fenêtre de matplotlib
+        plot_button = tk.Button(window, text="Afficher Plot", command=afficher_plot)
+        plot_button.pack(padx=20, pady=20)
+        WIDGETS.append(plot_button)
+
+        # Bouton pour afficher les différents graphes représentants les différentes étapes du traitement
+        detailles_button = tk.Button(window, text="Détailles", command=detailles)
+        detailles_button.pack(padx=50, pady=20)
+        WIDGETS.append(detailles_button)
+
+        # Bouton pour afficher les AP Relais et leurs AP voisins
+        ap_relais_button = tk.Button(window, text="Flux d'AP Relais", command=ap_relais)
+        ap_relais_button.pack(padx=50, pady=20)
+        WIDGETS.append(ap_relais_button)
     else:
+        # Affichage d'erreur en cas de manque d'importation d'un de deux fichiers
         erreur = tk.Label(window, text="Importer les fichiers AP et APC avant de commencer")
         erreur.pack(padx=50, pady=50)
+        WIDGETS.append(erreur)
 
-    plot_button = tk.Button(window, text="Show Plot", command=show_plot)
-    plot_button.pack(padx=20, pady=20)
+# Fonction pour supprimer les widgets (boutons et labels)
+def Reinitialiser(WIDGETS):
+    for x in WIDGETS:
+        x.pack_forget()
 
-    detailles_button = tk.Button(window, text="Détailles", command=detailless)
-    detailles_button.pack(padx=50, pady=20)
+# Fonction pour le boutton ap_relais
+def ap_relais():
+    for deg in degree(topo):
+        ap = tk.Label(window, text=f"L'AP n°{deg[0]} est relais pour {deg[1]} AP")
+        ap.pack(padx=50, pady=1)
 
-def show_plot():
-    graphe = determination_type_AP(zones(topologie(FICHIER_AP, FICHIER_APC)))
-    affichage(graphe, "classique")
+# Fonction pour le boutton afficher_plot
+def afficher_plot():
+    affichage(topo, "classique")
     plt.show()
 
-def detailless():
+# Fonction pour le boutton détailles
+def detailles():
     graphe = topologie(FICHIER_AP, FICHIER_APC)
     affichage(graphe, "classique")
     plt.show()
@@ -68,15 +100,25 @@ def detailless():
     affichage(graphe3, "classique")
     plt.show()
 
+# Création de la fenêtre principale
+window = tk.Tk()
+window.title("Détermination du type d’AP Wifi, par zone")
+
+# Création des boutons principales 
+
+# Bouton pour importer le fichier AP
 first_file_button = tk.Button(window, text="Importer coordonnées AP", command=import_first_file)
 first_file_button.pack(padx=20, pady=20)
 
+# Bouton pour importer le fichier APC
 second_file_button = tk.Button(window, text="Importer AP Controller", command=import_second_file)
 second_file_button.pack(padx=20, pady=20)
 
+# Affichage de l'image d'aperçu 
 image_label = tk.Label(window)
 image_label.pack(side="right", fill="both", expand=True)
 
+# Bouton pour démarrer le traitement
 start_button = tk.Button(window, text="Start", command=start)
 start_button.pack(padx=20, pady=20)
 
@@ -84,6 +126,7 @@ start_button.pack(padx=20, pady=20)
 # Creation du footer et placement en bas à gauche
 footer_label = tk.Label(window, text="Nicolas Egloff, Alexandro Amarayo, RT2A 2022/2023")
 footer_label.pack(side="bottom")
+
 
 #--------------------------------------TRAITEMENT-------------------------------------------------------------------
 
@@ -225,8 +268,14 @@ def AffichageCercles(graphe, pos, ray):
         cercle = plt.Circle(xy, ray[n], fill=False, color=couleurs_cercles[n])
         ax.add_artist(cercle)
     
-    ax.set(xlim=(min_x-max_rayon, max_x+max_rayon), ylim=(min_y-max_rayon, max_y+max_rayon))
+    ax.set_aspect(1)
+    ax.set(xlim=(min_x-max_rayon, max_x+max_rayon+80), ylim=(min_y-max_rayon, max_y+max_rayon))
 
+    line1 = plt.Line2D([], [], color="white", marker='o', markersize=12, markerfacecolor="white", markeredgecolor="blue")
+    line2 = plt.Line2D([], [], color="white", marker='o', markersize=12, markerfacecolor="white", markeredgecolor="red")
+    line3 = plt.Line2D([], [], color="white", marker='o', markersize=12,  markerfacecolor="white", markeredgecolor="green")
+    line4 = plt.Line2D([], [], color="white", marker='o', markersize=12, markerfacecolor="white", markeredgecolor="white")
+    plt.legend((line1, line2, line3, line4), ('Controlêur', 'Simple', 'Relais', 'Isolé'), numpoints=1, loc='lower right', title="Type d'AP")
 
 def preview():
     titre = f"graphe_{datetime.datetime.today().strftime('%d-%m-%Y_%H-%M-%S')}.png"
@@ -244,7 +293,7 @@ def zones(topologie):
 
     for noeud in types:
         if types[noeud] == 'C':
-            apcs[noeud], pred[noeud] = dij.dijkstra(topologie, noeud)
+            apcs[noeud], pred[noeud] = dijkstra(topologie, noeud)
             zones[noeud] = []
 
     topologie_zones = nx.create_empty_copy(topologie)
@@ -278,13 +327,19 @@ def zones(topologie):
     return topologie_zones
         
 def degree(topologie):
+    ap_relais = []
+
     # Trouver le degré de chaque noeud
     degrees = topologie.degree()
 
     # Trier les degrés par ordre décroissant
     sorted_degrees = sorted(degrees, key = lambda x:x[1], reverse = True)
 
-    return sorted_degrees
+    for deg in sorted_degrees:
+        if topologie.nodes[deg[0]]['type'] == "R":
+            ap_relais.append(deg)                                                                                                                                                                                                                                                                                                                                                                                   
+
+    return ap_relais
 
 def determination_type_AP(graph):
     for noeud in graph.nodes():
@@ -322,28 +377,38 @@ def couleurs_types(graph):
     print(nx.get_node_attributes(graph, 'zone'))
     return couleurs
 
-def performance(fonction):
-    start_time = time.time()
-    fonction()
-    end_time = time.time()
-    print(f"{fonction} a pris {end_time-start_time} secondes")
+def dijkstra(graphe, E):
+    queue, distances, predeceseurs = [], {}, {}
 
-def main():
+    for noeud in graphe.nodes:
+        queue.append(noeud)
+        distances[noeud] = math.inf
+        predeceseurs[noeud] = None
 
-    # Run the Tkinter event loop
-    window.mainloop()
+    distances[E] = 0
+    min = math.inf
 
+    while len(queue) > 0:
+        for S in queue:
+            if distances[S] < min:
+                u = S
+        if u in queue:
+            queue.remove(u)
+            for v in graphe.neighbors(u):
+                if v in queue:
+                    dist = distances[u] + graphe[u][v]['poids']
+                    if dist < distances[v]:
+                        distances[v] = dist
+                        predeceseurs[v] = u
+        else:
+            break
+    
+    return distances, predeceseurs
 
-    # graphe = topologie()
-    # affichage(graphe)
-    # graphe2 = zones(graphe)
-    # affichage(graphe2)
-    # graphe3 = determination_type_AP(graphe2)
-    # affichage(graphe3)
-  
-
+# Démarrage de l'application  
 if __name__=="__main__":
-    main()
+    # Lancer la boucle principale de Tkinter
+    window.mainloop()
 
 
 
