@@ -147,17 +147,17 @@ def ExtractionDesAP(fichier_ap, fichier_apc):
 
     # Boucle de création des AP
     for x in lignes:
-        x.strip()
-        
-        # Extraction de l'index (2 premiers caractères)
-        index = x[:2].strip()
+        # Découpage de la ligne en parties
+        x = x.strip().split(' ')
 
-        # Extraction du rayon (3 derniers caractères)
-        rayon = x[-3:].strip()
+        # Extraction de l'index
+        index = x[0].strip()
+
+        # Extraction du rayon
+        rayon = x[3].strip()
 
         # Extraction des coordonnées dans tuple coord
-        coord = x[x.find('(')+1:x.find(')')]
-        coord = coord.split(",")
+        coord = (x[1][1:x[1].find(',')], x[2][:x[2].find(')')])
         coord = (int(coord[0]), int(coord[1]))
 
         # Triage de mode et couleur de AP
