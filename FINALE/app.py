@@ -158,7 +158,7 @@ def ExtractionDesAP(fichier_ap, fichier_apc):
 
         # Extraction des coordonnées dans tuple coord
         coord = (x[1][1:x[1].find(',')], x[2][:x[2].find(')')])
-        coord = (int(coord[0]), int(coord[1]))
+        coord = (float(coord[0]), float(coord[1]))
 
         # Triage de mode et couleur de AP
         if index in apcs:
